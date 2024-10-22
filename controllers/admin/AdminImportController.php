@@ -1245,7 +1245,6 @@ class AdminImportControllerCore extends AdminController
         // Check if the CSV file exist
         if (Tools::getValue('filename')) {
             $entityType = $this->getSelectedEntity();
-
             $shopIsFeatureActive = Shop::isFeatureActive();
             // If i am a superadmin, i can truncate table (ONLY IF OFFSET == 0 or false and NOT FOR VALIDATION MODE!)
             if (!$offset && !$moreStep && !$validateOnly && (($shopIsFeatureActive && $this->context->employee->isSuperAdmin()) || !$shopIsFeatureActive) && Tools::getValue('truncate')) {
@@ -1360,13 +1359,6 @@ class AdminImportControllerCore extends AdminController
      */
     protected function truncateTables($entityType)
     {
-        // added 21-10-2024, delete combinations only for products in csv
-        if ($entityType === static::ENTITY_TYPE_COMBINATIONS) {
-            $this->deleteCombinationsForProducts();
-            return true;
-        }
-        // end delete combinations only for products in csv
-
         // Delegate truncate functionality to entity type
         if (static::hasEntityType($entityType)) {
             $importEntityType = static::getEntityType($entityType);
@@ -5415,50 +5407,5 @@ class AdminImportControllerCore extends AdminController
             }
         }
         return $truncatable;
-    }
-
-    // added 21-10-2024
-    protected function deleteCombinationsForProducts()
-    {
-        // Step 1: Use PrestaShop's built-in method to open the data source
-        $dataSource = $this->openDataSource();
-
-        if (!$dataSource) {
-            throw new PrestaShopException('Failed to open data source.');
-        }
-
-        // Step 2: Collect unique product IDs from the CSV
-        $productIds = [];
-        while ($row = $dataSource->getRow()) {
-            $productId = (int)$row['Product ID']; // Assuming 'Product ID' is the CSV header
-            if ($productId) {
-                $productIds[] = $productId;
-            }
-        }
-
-        $uniqueProductIds = array_unique($productIds);
-
-        // Step 3: Delete combinations for the collected product IDs
-        foreach ($uniqueProductIds as $productId) {
-            $this->deleteCombinationsByProductId($productId);
-        }
-    }
-
-
-    // added 21-10-2024
-    protected function deleteCombinationsByProductId($productId)
-    {
-        $combinations = Db::getInstance()->executeS('
-        SELECT id_product_attribute
-        FROM '._DB_PREFIX_.'product_attribute
-        WHERE id_product = '.(int)$productId);
-
-        if (!empty($combinations)) {
-            foreach ($combinations as $combination) {
-                $idProductAttribute = (int)$combination['id_product_attribute'];
-                $product = new Product($productId);
-                $product->deleteAttributeCombination($idProductAttribute);
-            }
-        }
     }
 }
