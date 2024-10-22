@@ -225,6 +225,19 @@
 				</div>
 				<hr />
 				<div class="form-group">
+					<label for="truncate_combinations_for_products" class="control-label col-lg-4">{l s='Delete combinations only for products in file'}</label>
+					<div class="col-lg-8">
+						<label class="switch-light prestashop-switch fixed-width-lg">
+							<input id="truncate_combinations_for_products" name="truncate_combinations_for_products" type="checkbox"/>
+							<span>
+								<span>{l s='Yes'}</span>
+								<span>{l s='No'}</span>
+							</span>
+							<a class="slide-button btn"></a>
+						</label>
+					</div>
+				</div>
+				<div class="form-group">
 					<label for="truncate" class="control-label col-lg-4">{l s='Delete all'} <span id="entitie">{l s='categories'}</span> {l s='before import'} </label>
 					<div class="col-lg-8">
 						<label class="switch-light prestashop-switch fixed-width-lg">
@@ -531,6 +544,12 @@
 
 		$("select#entity").change(function() {
 			const entityType = $('#entity').val();
+
+			if (entityType === '{AdminImportController::ENTITY_TYPE_COMBINATIONS}') {
+				$("#truncate_combinations_for_products").closest('.form-group').show();
+			} else {
+				$("#truncate_combinations_for_products").closest('.form-group').hide();
+			}
 
 			if (truncatable.includes(entityType)) {
 				$("#truncate").closest('.form-group').show();
